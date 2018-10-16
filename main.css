@@ -1,0 +1,54 @@
+body {
+  font-family: 'Lora', serif;
+  background-color: #222222;
+}
+
+.colourGrid {
+  margin: 20px;
+  padding: 20px;
+
+  display: grid;
+  max-height: 400px;
+  min-width: 120px;
+  max-width: 500px;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  grid-template-rows: repeat(auto-fill, minmax(80px, 1fr));
+  background-color: #888888;
+  color: #222;
+  border: 1px solid;
+  border-radius: 10px;
+}
+
+.buttons {
+  min-width: 120px;
+  max-width: 500px;
+  margin: 0px 20px;
+  padding: 0px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.buttons > span {
+  display: inline-block;
+  text-align: center;
+  padding: 10px;
+  margin: 0px 10px;
+  min-width: 50px;
+  background-color: #d6b390;
+  color: #111;
+  border-radius: 5px;
+  box-shadow: 2px 2px 2px #666;
+}
+
+.buttons > span.inactive {
+  background-color: #957260;
+  color: #494540;
+  box-shadow: none;
+}
+
+.name {
+  background-color: #737a72;
+  font-size: 30px;
+  font-family: 'Lora', serif;
+  line-height: 100%;
+}
