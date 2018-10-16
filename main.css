@@ -1,0 +1,71 @@
+body {
+  font-family: 'Lora', serif;
+  background-color: #222222;
+}
+
+.colourGrid {
+  margin: 20px;
+  padding: 20px;
+
+  display: grid;
+  max-height: 400px;
+  min-width: 120px;
+  max-width: 500px;
+  grid-template-columns: repeat(auto-fill, 80px);
+  grid-template-rows: repeat(auto-fill, 80px);
+  background-color: #888888;
+  color: #222;
+  border: 1px solid;
+  border-radius: 10px;
+}
+
+.inset {
+  height: 10px;
+  width: 10px;
+}
+
+.fixed {
+  border-radius: 40px;
+}
+
+.buttons {
+  min-width: 120px;
+  max-width: 500px;
+  margin: 0px 20px;
+  padding: 0px 20px;
+  display: flex;
+  justify-content: center;
+  cursor: default;
+  -moz-user-select: none;
+}
+
+.buttons > span {
+  display: inline-block;
+  text-align: center;
+  padding: 10px;
+  margin: 0px 10px;
+  min-width: 50px;
+  background-color: #d6b390;
+  color: #111;
+  border-radius: 5px;
+  box-shadow: 3px 3px 2px #666;
+  position: relative;
+  left: -3px;
+  top: -3px;
+  transition: ease-in-out 0.1s;
+}
+
+.buttons > span.active {
+  background-color: #757270;
+  color: #404040;
+  box-shadow: none;
+  left: 0px;
+  top: 0px;
+}
+
+.name {
+  background-color: #737a72;
+  font-size: 30px;
+  font-family: 'Lora', serif;
+  line-height: 100%;
+}
