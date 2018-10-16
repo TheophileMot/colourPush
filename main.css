@@ -11,12 +11,21 @@ body {
   max-height: 400px;
   min-width: 120px;
   max-width: 500px;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  grid-template-rows: repeat(auto-fill, minmax(80px, 1fr));
+  grid-template-columns: repeat(auto-fill, 80px);
+  grid-template-rows: repeat(auto-fill, 80px);
   background-color: #888888;
   color: #222;
   border: 1px solid;
   border-radius: 10px;
+}
+
+.inset {
+  height: 10px;
+  width: 10px;
+}
+
+.fixed {
+  border-radius: 40px;
 }
 
 .buttons {
@@ -26,6 +35,8 @@ body {
   padding: 0px 20px;
   display: flex;
   justify-content: center;
+  cursor: default;
+  -moz-user-select: none;
 }
 
 .buttons > span {
@@ -37,13 +48,19 @@ body {
   background-color: #d6b390;
   color: #111;
   border-radius: 5px;
-  box-shadow: 2px 2px 2px #666;
+  box-shadow: 3px 3px 2px #666;
+  position: relative;
+  left: -3px;
+  top: -3px;
+  transition: ease-in-out 0.1s;
 }
 
-.buttons > span.inactive {
-  background-color: #957260;
-  color: #494540;
+.buttons > span.active {
+  background-color: #757270;
+  color: #404040;
   box-shadow: none;
+  left: 0px;
+  top: 0px;
 }
 
 .name {
