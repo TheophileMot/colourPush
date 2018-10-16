@@ -3,20 +3,23 @@ body {
   background-color: #222222;
 }
 
-.colourGrid {
+.container {
   margin: 20px;
   padding: 20px;
 
-  display: grid;
-  max-height: 400px;
   min-width: 120px;
   max-width: 500px;
+  background-color: #888;
+  color: #222;
+  border: 1px solid #666;
+  border-radius: 10px;
+}
+
+.colour-grid {
+  display: grid;
+  max-height: 400px;
   grid-template-columns: repeat(auto-fill, 80px);
   grid-template-rows: repeat(auto-fill, 80px);
-  background-color: #888888;
-  color: #222;
-  border: 1px solid;
-  border-radius: 10px;
 }
 
 .inset {
@@ -26,6 +29,8 @@ body {
 
 .fixed {
   border-radius: 40px;
+  width: 40px;
+  height: 40px;
 }
 
 .buttons {

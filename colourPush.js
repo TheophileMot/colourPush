@@ -1,5 +1,5 @@
 const EPSILON = 1;
-const PUSH_MULTIPLIER = 1e4;
+const PUSH_MULTIPLIER = 1e2;
 
 class Colour {
 
@@ -11,8 +11,16 @@ class Colour {
     this.fixed = fixed;
   }
 
+  get initialRgb() {
+    return `rgb(${this.initial.r}, ${this.initial.g}, ${this.initial.b})`;
+  }
+
   get rgb() {
     return `rgb(${this.r}, ${this.g}, ${this.b})`;
+  }
+
+  get luminance() {
+    return (0.299 * this.r + 0.587 * this.g + 0.114 * this.b) / 255;
   }
 
   pushFrom(otherColour) {
@@ -65,8 +73,7 @@ function togglePush() {
 }
 
 function setUpColourScheme() {
-  let colourScheme = [
-    // new Colour(  0,   0,   0, true),
+  let avoidColours = [
     new Colour(  0,   0,   0, true),
     new Colour(255,   0,   0, true),
     new Colour(  0, 255,   0, true),
@@ -75,19 +82,29 @@ function setUpColourScheme() {
     new Colour(255,   0, 255, true),
     new Colour(  0, 255, 255, true),
     new Colour(255, 255, 255, true),
-    new Colour(128, 97, 84),
-    new Colour(134, 169, 103),
-    new Colour(196, 179, 126),
-    new Colour(115, 122, 114),
-    new Colour(214, 222, 209),
+  ];
+  let displayColours = [
+    // new Colour(  0,   0,   0, true),
+    // new Colour(128, 97, 84),
+    // new Colour(134, 169, 103),
+    // new Colour(196, 179, 126),
+    // new Colour(115, 122, 114),
+    // new Colour(214, 222, 209),
   ];
 
-  for (let i = 0; i < colourScheme.length; i++) {
-    let colour = colourScheme[i];
+  for (let i = 0; i < 24; i++) {
+    let r = Math.floor(Math.random() * 256);
+    let g = Math.floor(Math.random() * 256);
+    let b = Math.floor(Math.random() * 256);
+    displayColours.push(new Colour(r, g, b));
+  }
+
+  for (let i = 0; i < displayColours.length; i++) {
+    let colour = displayColours[i];
     let $square = $('<div>')
       .css('background-color', colour.rgb)
       .attr('id', `colour-box-current-${i}`);
-    if (colourScheme[i].fixed) {
+    if (displayColours[i].fixed) {
       $square.addClass('fixed');
     } else {
       let $innerSquare = $('<div>')
@@ -96,38 +113,43 @@ function setUpColourScheme() {
         .attr('id', `colour-box-initial-${i}`);
       $square.append($innerSquare);
     }
-    $('.colourGrid').append($square);
+    $('.colour-grid').append($square);
   }
 
-  return colourScheme;
+  return { avoidColours, displayColours };
 }
 
 function pushLoop(colourScheme) {
   pushColours(colourScheme);
-  for (let i = 0; i < colourScheme.length; i++) {
-    $(`#colour-box-current-${i}`).css('background-color', colourScheme[i].rgb);
+  for (let i = 0; i < colourScheme.displayColours.length; i++) {
+    $(`#colour-box-current-${i}`).css('background-color', colourScheme.displayColours[i].rgb);
+    $(`#colour-box-initial-${i}`).css('background-color', colourScheme.displayColours[i].initialRgb);
   }
 }
 
-function pushColours(colourScheme) {
+function pushColours({ avoidColours, displayColours }) {
   if (!$('#button-push').hasClass('active')) { return; }
 
-  for (let i = 0; i < colourScheme.length; i++) {
-    for (let j = 0; j < colourScheme.length; j++) {
+  for (let i = 0; i < displayColours.length; i++) {
+    for (let j = 0; j < displayColours.length; j++) {
       if (i !== j) {
-        colourScheme[i].pushFrom(colourScheme[j]);
+        displayColours[i].pushFrom(displayColours[j]);
         // TODO: all pushes should happen at once; make temp array for new values rather
-        //       than changing actual array
+        //       than changing actual array. Same applies to loop for avoid colours below.
       }
     }
-    colourScheme[i].pushFrom(new Colour(colourScheme[i].r, colourScheme[i].g,   0));
-    colourScheme[i].pushFrom(new Colour(colourScheme[i].r, colourScheme[i].g, 255));
-    colourScheme[i].pushFrom(new Colour(colourScheme[i].r,   0, colourScheme[i].b));
-    colourScheme[i].pushFrom(new Colour(colourScheme[i].r, 255, colourScheme[i].b));
-    colourScheme[i].pushFrom(new Colour(  0, colourScheme[i].g, colourScheme[i].b));
-    colourScheme[i].pushFrom(new Colour(255, colourScheme[i].g, colourScheme[i].b));
-    // colourScheme[i].pushSelf();
+    for (let j = 0; j < avoidColours.length; j++) {
+      displayColours[i].pushFrom(avoidColours[j]);
+    }
+    displayColours[i].pushFrom(new Colour(displayColours[i].r, displayColours[i].g,   0));
+    displayColours[i].pushFrom(new Colour(displayColours[i].r, displayColours[i].g, 255));
+    displayColours[i].pushFrom(new Colour(displayColours[i].r,   0, displayColours[i].b));
+    displayColours[i].pushFrom(new Colour(displayColours[i].r, 255, displayColours[i].b));
+    displayColours[i].pushFrom(new Colour(  0, displayColours[i].g, displayColours[i].b));
+    displayColours[i].pushFrom(new Colour(255, displayColours[i].g, displayColours[i].b));
   }
+
+  displayColours.sort((colA, colB) => colA.luminance - colB.luminance);
 }
 
 function clamp(x, min, max) {
