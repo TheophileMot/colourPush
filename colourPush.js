@@ -1,5 +1,6 @@
 const EPSILON = 1;
 const PUSH_MULTIPLIER = 1e4;
+const WALL_PUSH_DIST = 0;
 
 class Colour {
 
@@ -56,6 +57,7 @@ class Colour {
 $( document ).ready(() => {
   setUpButtons();
   let colourScheme = setUpColourScheme();
+  updateCanvas(colourScheme);
 
   setInterval(() => pushLoop(colourScheme), 10);
 });
@@ -90,13 +92,14 @@ function setUpColourScheme() {
     new Colour(115, 122, 114),
     new Colour(214, 222, 209),
   ];
+  // displayColours = [];
 
-  // for (let i = 0; i < 24; i++) {
-  //   let r = Math.floor(Math.random() * 256);
-  //   let g = Math.floor(Math.random() * 256);
-  //   let b = Math.floor(Math.random() * 256);
-  //   displayColours.push(new Colour(r, g, b));
-  // }
+  for (let i = 0; i < 0; i++) {
+    let r = Math.floor(Math.random() * 256);
+    let g = Math.floor(Math.random() * 256);
+    let b = Math.floor(Math.random() * 256);
+    displayColours.push(new Colour(r, g, b));
+  }
 
   for (let i = 0; i < displayColours.length; i++) {
     let colour = displayColours[i];
@@ -140,13 +143,13 @@ function pushColours({ avoidColours, displayColours }) {
     }
     for (let j = 0; j < avoidColours.length; j++) {
       displayColours[i].pushFrom(avoidColours[j]);
-    }
-    displayColours[i].pushFrom(new Colour(displayColours[i].r, displayColours[i].g,   0));
-    displayColours[i].pushFrom(new Colour(displayColours[i].r, displayColours[i].g, 255));
-    displayColours[i].pushFrom(new Colour(displayColours[i].r,   0, displayColours[i].b));
-    displayColours[i].pushFrom(new Colour(displayColours[i].r, 255, displayColours[i].b));
-    displayColours[i].pushFrom(new Colour(  0, displayColours[i].g, displayColours[i].b));
-    displayColours[i].pushFrom(new Colour(255, displayColours[i].g, displayColours[i].b));
+    }    
+    displayColours[i].pushFrom(new Colour(displayColours[i].r, displayColours[i].g, -WALL_PUSH_DIST));
+    displayColours[i].pushFrom(new Colour(displayColours[i].r, displayColours[i].g, 255 + WALL_PUSH_DIST));
+    displayColours[i].pushFrom(new Colour(displayColours[i].r, -WALL_PUSH_DIST, displayColours[i].b));
+    displayColours[i].pushFrom(new Colour(displayColours[i].r, 255 + WALL_PUSH_DIST, displayColours[i].b));
+    displayColours[i].pushFrom(new Colour(-WALL_PUSH_DIST, displayColours[i].g, displayColours[i].b));
+    displayColours[i].pushFrom(new Colour(255 + WALL_PUSH_DIST, displayColours[i].g, displayColours[i].b));
   }
 
   displayColours.sort((colA, colB) => colA.luminance - colB.luminance);
@@ -155,6 +158,8 @@ function pushColours({ avoidColours, displayColours }) {
 function updateCanvas(colourScheme) {
   let canvas = document.getElementById('push-map');
   let ctx = canvas.getContext('2d');
+
+  // Clear canvas.
   ctx.fillStyle = '#aaa';
   ctx.fillRect(1, 1, 400, 240);
   
@@ -175,7 +180,9 @@ function drawPoint3d(ctx, colour) {
   let x = 200 + scaledR + scaledG;
   let y = 120 + 0.5 * scaledR - 0.5 * scaledG - scaledB;
 
-  let borderColour = colour.luminance < 0.5 ? '#fff' : '#000';  
+  // let borderColour = colour.luminance < 0.5 ? '#fff' : '#000';
+  let reverseLum = 255 * (1 - colour.luminance);
+  let borderColour = new Colour(reverseLum, reverseLum, reverseLum).rgb;
   if (colour.fixed ) {
     drawDisc3d(ctx, x, y, colour, 8 + 5 * (r - g) / 255, { borderColour });
   } else {
