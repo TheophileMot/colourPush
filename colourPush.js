@@ -1,15 +1,20 @@
-const EPSILON = 1;
-const PUSH_MULTIPLIER = 1e4;
-const WALL_PUSH_DIST = 0;
+const EPSILON = { pull: Infinity, push: 1};
+const PUSH_MULTIPLIER = 1e3;
+const WALL_PUSH_DIST = 32;
+const FRICTION = 0.99;
+const TETHER = 0.03;
 
 class Colour {
 
-  constructor(r, g, b, fixed = false) {
+  constructor(r, g, b, fixed = false, mass = 1) {
     this.initial = { r, g, b };
     this.r = r;
     this.g = g;
     this.b = b;
+
     this.fixed = fixed;
+    this.mass = mass;
+    this.velocity = { r: 0, g: 0, b: 0 };
   }
 
   get initialRgb() {
@@ -32,10 +37,12 @@ class Colour {
     let deltaB = this.b - otherColour.b;
     let sqD = 3 * deltaR * deltaR + 4 * deltaG * deltaG + 2 * deltaB * deltaB;
     let d = Math.sqrt(sqD);
-    if (d > EPSILON) {
-      this.r = clamp(this.r + PUSH_MULTIPLIER * (deltaR / d) / sqD, 0, 255);
-      this.g = clamp(this.g + PUSH_MULTIPLIER * (deltaG / d) / sqD, 0, 255);
-      this.b = clamp(this.b + PUSH_MULTIPLIER * (deltaB / d) / sqD, 0, 255);
+    let massCoeff = this.mass * otherColour.mass;
+    let direction = massCoeff > 0 ? 'push' : 'pull';
+    if (d > EPSILON[direction]) {
+      this.velocity.r += PUSH_MULTIPLIER * massCoeff * (deltaR / d) / sqD;
+      this.velocity.g += PUSH_MULTIPLIER * massCoeff * (deltaG / d) / sqD;
+      this.velocity.b += PUSH_MULTIPLIER * massCoeff * (deltaB / d) / sqD;
     }
   }
 
@@ -49,7 +56,17 @@ class Colour {
       this.r = clamp(this.r + PUSH_MULTIPLIER * (deltaR / d) / sqD, 0, 255);
       this.g = clamp(this.g + PUSH_MULTIPLIER * (deltaG / d) / sqD, 0, 255);
       this.b = clamp(this.b + PUSH_MULTIPLIER * (deltaB / d) / sqD, 0, 255);
-    }    
+    }
+  }
+
+  moveStep() {
+    this.velocity.r *= FRICTION;
+    this.velocity.g *= FRICTION;
+    this.velocity.b *= FRICTION;
+
+    this.r = clamp(TETHER * this.initial.r + (1 - TETHER) * (this.r + this.velocity.r), 0, 255);
+    this.g = clamp(TETHER * this.initial.g + (1 - TETHER) * (this.g + this.velocity.g), 0, 255);
+    this.b = clamp(TETHER * this.initial.b + (1 - TETHER) * (this.b + this.velocity.b), 0, 255);
   }
 
 }
@@ -84,6 +101,8 @@ function setUpColourScheme() {
     new Colour(255,   0, 255, true),
     new Colour(  0, 255, 255, true),
     new Colour(255, 255, 255, true),
+    // new Colour(128, 128, 128, true, -1),
+    // new Colour(192,   0,   0, true, -1),
   ];
   let displayColours = [
     new Colour(128, 97, 84),
@@ -99,6 +118,7 @@ function setUpColourScheme() {
     let g = Math.floor(Math.random() * 256);
     let b = Math.floor(Math.random() * 256);
     displayColours.push(new Colour(r, g, b));
+    console.log(`${r} ${g} ${b}`);
   }
 
   for (let i = 0; i < displayColours.length; i++) {
@@ -125,6 +145,8 @@ function pushLoop(colourScheme) {
   if (!$('#button-push').hasClass('active')) { return; }
 
   pushColours(colourScheme);
+  moveColours(colourScheme);
+  // colourScheme.displayColours.sort((colourA, colourB) => colourA.luminance - colourB.luminance);
   for (let i = 0; i < colourScheme.displayColours.length; i++) {
     $(`#colour-box-current-${i}`).css('background-color', colourScheme.displayColours[i].rgb);
     $(`#colour-box-initial-${i}`).css('background-color', colourScheme.displayColours[i].initialRgb);
@@ -133,26 +155,30 @@ function pushLoop(colourScheme) {
 }
 
 function pushColours({ avoidColours, displayColours }) {
-  for (let i = 0; i < displayColours.length; i++) {
-    for (let j = 0; j < displayColours.length; j++) {
-      if (i !== j) {
-        displayColours[i].pushFrom(displayColours[j]);
+  for (let colourA of displayColours) {
+    for (let colourB of displayColours) {
+      if (colourA !== colourB) {
+        colourA.pushFrom(colourB);
         // TODO: all pushes should happen at once; make temp array for new values rather
         //       than changing actual array. Same applies to loop for avoid colours below.
       }
     }
-    for (let j = 0; j < avoidColours.length; j++) {
-      displayColours[i].pushFrom(avoidColours[j]);
-    }    
-    displayColours[i].pushFrom(new Colour(displayColours[i].r, displayColours[i].g, -WALL_PUSH_DIST));
-    displayColours[i].pushFrom(new Colour(displayColours[i].r, displayColours[i].g, 255 + WALL_PUSH_DIST));
-    displayColours[i].pushFrom(new Colour(displayColours[i].r, -WALL_PUSH_DIST, displayColours[i].b));
-    displayColours[i].pushFrom(new Colour(displayColours[i].r, 255 + WALL_PUSH_DIST, displayColours[i].b));
-    displayColours[i].pushFrom(new Colour(-WALL_PUSH_DIST, displayColours[i].g, displayColours[i].b));
-    displayColours[i].pushFrom(new Colour(255 + WALL_PUSH_DIST, displayColours[i].g, displayColours[i].b));
+    for (let colourB of avoidColours) {
+      colourA.pushFrom(colourB);
+    }
+    colourA.pushFrom(new Colour(colourA.r, colourA.g, -WALL_PUSH_DIST, true, 0.5));
+    colourA.pushFrom(new Colour(colourA.r, colourA.g, 255 + WALL_PUSH_DIST, true, 0.5));
+    colourA.pushFrom(new Colour(colourA.r, -WALL_PUSH_DIST, colourA.b, true, 0.5));
+    colourA.pushFrom(new Colour(colourA.r, 255 + WALL_PUSH_DIST, colourA.b, true, 0.5));
+    colourA.pushFrom(new Colour(-WALL_PUSH_DIST, colourA.g, colourA.b, true, 0.5));
+    colourA.pushFrom(new Colour(255 + WALL_PUSH_DIST, colourA.g, colourA.b, true, 0.5));
   }
+}
 
-  displayColours.sort((colA, colB) => colA.luminance - colB.luminance);
+function moveColours({ displayColours }) {
+  for (let colour of displayColours) {
+    colour.moveStep();
+  }
 }
 
 function updateCanvas(colourScheme) {
@@ -165,7 +191,7 @@ function updateCanvas(colourScheme) {
   
   // Sort by depth of 3d display.
   let allColours = [...colourScheme.avoidColours, ...colourScheme.displayColours];
-  allColours.sort((colA, colB) => (colA.r - colA.g) - (colB.r - colB.g));
+  allColours.sort((colourA, colourB) => (colourA.r - colourA.g) - (colourB.r - colourB.g));
   for (let colour of allColours) {
     drawPoint3d(ctx, colour);
   }
@@ -213,10 +239,6 @@ function drawSquare(ctx, x, y, colour, size, borderColour = '#000') {
   }
   ctx.fillStyle = colour.rgb;
   ctx.fillRect(x + 1 - size, y + 1 - size, 2 * size - 1, 2 * size - 1);
-}
-
-function rgbAlpha(rgb, alpha) {
-  return rgb.replace(/rgb\((.*)\)/, `rgba($1, ${alpha})`);
 }
 
 function clamp(x, min, max) {
